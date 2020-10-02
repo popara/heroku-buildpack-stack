@@ -8,6 +8,7 @@ set -o pipefail
 BUILD_DIR="$1"
 CACHE_DIR="$2"
 ENV_DIR="$3"
+BP_DIR=$(cd "$(dirname "${0:-}")"; cd ..; pwd)
 
 function speak (){
   echo "-----> $(date -u '+%Y-%m-%d_%H:%M:%S') $1"
@@ -37,11 +38,13 @@ mkdir -p "$PROFILE_DIR"
 # Usage: $ set-env key value
 function set-env (){
   echo "export $1=$2" >> "$PROFILE_PATH"
+  echo "export $1=$2" >> "$BP_DIR/export"
 }
 
 # Usage: $ set-default-env key value
 function set-default-env (){
   echo "export $1=\${$1:-$2}" >> "$PROFILE_PATH"
+  echo "export $1=\${$1:-$2}" >> "$BP_DIR/export"
 }
 
 export LANG=en_US.UTF-8
@@ -117,5 +120,8 @@ mv "$WORK_DIR/.local/bin" "$BUILD_DIR/.local"
 speak "Caching .stack-work"
 rsync -avq "$WORK_DIR/.stack-work/" "$SANDBOX_DIR"
 cp -Rp "$WORK_DIR/.stack-work" "$BUILD_DIR"
+
+
+
 
 speak "Finished!"
