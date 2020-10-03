@@ -43,8 +43,10 @@ mkdir -p "$PROFILE_DIR"
 # Usage: $ set-env key value
 function set-env (){
   echo "export $1=$2" >> "$PROFILE_PATH"
-  speak "Setting $1 - $2"
-  echo "export $1=$2" >> "$BP_DIR/export"
+  if [ -w "$BP_DIR"]; then
+    speak "Setting $1 - $2"
+    echo "export $1=$2" >> "$BP_DIR/export"
+  fi
 }
 
 # Usage: $ set-default-env key value
