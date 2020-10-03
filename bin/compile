@@ -13,6 +13,11 @@ BP_DIR=$(cd "$(dirname "${0:-}")"; cd ..; pwd)
 function speak (){
   echo "-----> $(date -u '+%Y-%m-%d_%H:%M:%S') $1"
 }
+function say (){
+  echo "       $(date -u '+%Y-%m-%d_%H:%M:%S') $1"
+}
+
+
 
 speak "Starting..."
 
@@ -113,8 +118,9 @@ set-env PATH "$WORK_DIR/.local/bin:$WORK_DIR/vendor/bin:\$PATH"
 set-default-env LIBRARY_PATH "$WORK_DIR/vendor/ghc-libs:$WORK_DIR/vendor/lib:/usr/lib"
 set-default-env LD_LIBRARY_PATH "$WORK_DIR/vendor/ghc-libs:$WORK_DIR/vendor/lib:/usr/lib"
 
+speak 
 
-speak "$BP_DIR/export"
+ "$BP_DIR/export"
 ls -ls "$BP_DIR/export"
 
 speak "Making stack binaries available"
