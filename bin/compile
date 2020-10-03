@@ -120,9 +120,9 @@ set-env PATH "$WORK_DIR/.local/bin:$WORK_DIR/vendor/bin:\$PATH"
 set-default-env LIBRARY_PATH "$WORK_DIR/vendor/ghc-libs:$WORK_DIR/vendor/lib:/usr/lib"
 set-default-env LD_LIBRARY_PATH "$WORK_DIR/vendor/ghc-libs:$WORK_DIR/vendor/lib:/usr/lib"
 
-speak 
+speak " EXPORT DIR ---- >>>> "
+say "$BP_DIR/export"
 
- "$BP_DIR/export"
 ls -ls "$BP_DIR/export"
 
 speak "Making stack binaries available"
