@@ -85,7 +85,7 @@ fi
 ########## project build ###########################################
 SANDBOX_DIR="$CACHE_DIR/.stack-work"
 if [ -e "$SANDBOX_DIR" ]; then
-    speak "Restoring .stack-work"`
+    speak "Restoring .stack-work"
     cp -Rp "$SANDBOX_DIR" "$WORK_DIR"
 else
     mkdir -p "$SANDBOX_DIR"
