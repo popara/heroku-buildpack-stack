@@ -85,7 +85,7 @@ fi
 ########## project build ###########################################
 SANDBOX_DIR="$CACHE_DIR/.stack-work"
 if [ -e "$SANDBOX_DIR" ]; then
-    speak "Restoring .stack-work"
+    speak "Restoring .stack-work"`
     cp -Rp "$SANDBOX_DIR" "$WORK_DIR"
 else
     mkdir -p "$SANDBOX_DIR"
@@ -117,6 +117,6 @@ mv "$WORK_DIR/.local/bin" "$BUILD_DIR/.local"
 speak "Caching .stack-work"
 rsync -avq "$WORK_DIR/.stack-work/" "$SANDBOX_DIR"
 cp -Rp "$WORK_DIR/.stack-work" "$BUILD_DIR"
-rm -rf "$WORK_DIR/.stack-work"
+# rm -rf "$WORK_DIR/.stack-work"
 
 speak "Finished!"
