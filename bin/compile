@@ -25,14 +25,23 @@ if [ -d "$ENV_DIR" ]; then
   done
 fi
 
-WORK_DIR=/app
-cp -Rp "$BUILD_DIR/." "$WORK_DIR"
+
+
+WORK_DIR=~/app
+speak "Copy App"
+# cp -Rp "$BUILD_DIR/." "$WORK_DIR"
 mkdir -p "$WORK_DIR/vendor/bin"
 mkdir -p "$WORK_DIR/vendor/ghc-libs"
+mkdir -p "$BUILD_DIR/.profile.d"
 
 PROFILE_DIR="$BUILD_DIR/.profile.d"
 PROFILE_PATH="$PROFILE_DIR/stack.sh"
-mkdir -p "$PROFILE_DIR"
+mkdir -p $PROFILE_DIR
+
+touch "$PROFILE_PATH"
+echo "$PROFILE_PATH" 
+ls -la "$PROFILE_PATH"
+
 
 # Usage: $ set-env key value
 function set-env (){
@@ -50,67 +59,30 @@ export LD_LIBRARY_PATH=$LIBRARY_PATH
 export PATH=$WORK_DIR/.local/bin:$WORK_DIR/vendor/bin:$PATH
 export STACK_ROOT=$CACHE_DIR/.stack
 
-########## Cache validation ########################################
-# Generate hash of project configuration files to detect changes
-STACK_HASH=$(find "$WORK_DIR" -name "stack.yaml" -o -name "package.yaml" -o -name "*.cabal" 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-CACHE_HASH_FILE="$CACHE_DIR/stack-hash"
 
-# Check if cache is valid
-if [ -f "$CACHE_HASH_FILE" ] && [ "$(cat $CACHE_HASH_FILE)" = "$STACK_HASH" ]; then
-  CACHE_VALID=true
-  speak "Cache is valid (hash: ${STACK_HASH:0:8}...)"
-else
-  CACHE_VALID=false
-  speak "Cache invalid or missing, dependencies may have changed"
-  echo "$STACK_HASH" > "$CACHE_HASH_FILE"
-fi
-
-########## stack exe ###############################################
-STACK_VER=${STACK_VER:-3.5.1}
+# ########## stack exe ###############################################
+STACK_VER=${STACK_VER:-2.7.5}
 STACK_URL=${STACK_URL:-https://github.com/commercialhaskell/stack/releases/download/v"$STACK_VER"/stack-"$STACK_VER"-linux-x86_64.tar.gz}
 STACK_DIR="$CACHE_DIR/stack-$STACK_VER"
 STACK_EXE="$STACK_DIR/stack"
-STACK_VERSION_FILE="$CACHE_DIR/stack-version"
-
-# Improved Stack executable caching with version validation
-if [ -f "$STACK_VERSION_FILE" ] && [ "$(cat $STACK_VERSION_FILE)" = "$STACK_VER" ] && [ -e "$STACK_EXE" ]; then
-  speak "Using cached stack-$STACK_VER"
-else
+if [ ! -e "$STACK_EXE" ]; then
   speak "Downloading stack-$STACK_VER"
-  rm -rf "$STACK_DIR"
   mkdir -p "$STACK_DIR"
   curl -# -L "$STACK_URL" | tar xz -C "$STACK_DIR" --strip-components=1
-  echo "$STACK_VER" > "$STACK_VERSION_FILE"
 fi
 
-speak "Restoring stack-$STACK_VER"
-cp "$STACK_EXE" "$WORK_DIR/vendor/bin/stack"
-chmod a+x "$WORK_DIR/vendor/bin/stack"
-
-########## stack vars ##############################################
-if [ -d "$ENV_DIR" ]; then
-  speak "Substituting stack vars"
-  perl -p -i -e 's/\{\{([^}]+)\}\}/defined$ENV{$1}?$ENV{$1}:$&/eg' "$BUILD_DIR/stack.yaml"
-fi
 
 ########## project build ###########################################
 SANDBOX_DIR="$CACHE_DIR/.stack-work"
-
-# Improved .stack-work caching with validation
-if [ -e "$SANDBOX_DIR" ] && [ "$CACHE_VALID" = "true" ]; then
-    speak "Restoring .stack-work (cache valid)"
+if [ -e "$SANDBOX_DIR" ]; then
+    speak "Restoring .stack-work"
     cp -Rp "$SANDBOX_DIR" "$WORK_DIR"
 else
-    if [ "$CACHE_VALID" = "false" ]; then
-        speak "Cache invalid, clearing .stack-work"
-        rm -rf "$SANDBOX_DIR"
-    else
-        speak ".stack-work cache not found"
-    fi
     mkdir -p "$SANDBOX_DIR"
 fi
 
 speak "Running stack"
+
 cd "$WORK_DIR"
 # Makefile support (if you need other build tools than Stack that you need to use in conjunction)
 if [ -f "$BUILD_DIR/Makefile" ]; then
@@ -118,9 +90,13 @@ if [ -f "$BUILD_DIR/Makefile" ]; then
     make
     make install
 else
-    stack setup --no-reinstall
+    speak "stack setup && stack build --copy-bins"
+   
+    stack setup
     stack build --copy-bins
+    speak "stack-done"
 fi
+
 
 # Set context environment variables.
 set-env PATH "$WORK_DIR/.local/bin:$WORK_DIR/vendor/bin:\$PATH"
@@ -129,7 +105,8 @@ set-default-env LD_LIBRARY_PATH "$WORK_DIR/vendor/ghc-libs:$WORK_DIR/vendor/lib:
 
 speak "Making stack binaries available"
 mkdir -p "$BUILD_DIR/vendor"
-mkdir -p "$BUILD_DIR/.local"
+mkdir -p "$BUILD_DIR/.local/bin"
+
 mv "$WORK_DIR/vendor/ghc-libs" "$BUILD_DIR/vendor"
 mv "$WORK_DIR/.local/bin" "$BUILD_DIR/.local"
 
